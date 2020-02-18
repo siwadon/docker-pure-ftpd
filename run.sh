@@ -69,13 +69,16 @@ $FTP_USER_PASS" > "$PWD_FILE"
         PURE_PW_ADD_FLAGS="$PURE_PW_ADD_FLAGS -g $FTP_USER_GID"
     fi
 
-    pure-pw useradd "$FTP_USER_NAME" -f "$PASSWD_FILE" -m -d "$FTP_USER_HOME" $PURE_PW_ADD_FLAGS < "$PWD_FILE"
+    # pure-pw useradd "$FTP_USER_NAME" -f "$PASSWD_FILE" -m -d "$FTP_USER_HOME" $PURE_PW_ADD_FLAGS < "$PWD_FILE"
+    echo "$FTP_USER_NAME:$FTP_USER_PASS::1000::$FTP_USER_HOME:/bin/bash" | newusers
 
     if [ ! -z "$FTP_USER_HOME_PERMISSION" ]
     then
         chmod "$FTP_USER_HOME_PERMISSION" "$FTP_USER_HOME"
         echo " root user give $FTP_USER_NAME ftp user at $FTP_USER_HOME directory has $FTP_USER_HOME_PERMISSION permission"
     fi
+
+    chmod 775 $FTP_USER_HOME
 
     if [ ! -z "$FTP_USER_UID" ]
     then
@@ -88,6 +91,7 @@ $FTP_USER_PASS" > "$PWD_FILE"
         if ! [[ $(ls -ld $FTP_USER_HOME | awk '{print $3}') = 'ftpuser' ]]
         then
             chown ftpuser "$FTP_USER_HOME"
+            chgrp ftpgroup "$FTP_USER_HOME"
             echo " root user give $FTP_USER_HOME directory ftpuser owner"
         fi
     fi
@@ -137,6 +141,8 @@ fi
 # let users know what flags we've ended with (useful for debug)
 echo "Starting Pure-FTPd:"
 echo "  pure-ftpd $PURE_FTPD_FLAGS"
+
+service ssh start
 
 # start pureftpd with requested flags
 exec /usr/sbin/pure-ftpd $PURE_FTPD_FLAGS
